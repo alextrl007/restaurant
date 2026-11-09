@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Cine plătește?</title>
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--ink:#1f2328;--muted:#6b7280;--line:#e5e2d9;--accent:#c2410c;--accent-ink:#fff;--chip:#efece4;--warn:#b45309}
+@media (prefers-color-scheme:dark){:root{--bg:#14120f;--card:#1e1b17;--ink:#f1ede4;--muted:#a39d90;--line:#332e27;--accent:#fb923c;--accent-ink:#1a1209;--chip:#2a2620;--warn:#fbbf24}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:0 16px calc(32px + env(safe-area-inset-bottom))}
+main{max-width:560px;margin:0 auto}
+h1{font-size:1.5rem;margin:24px 0 4px}
+h2{font-size:1.05rem;margin:0 0 12px}
+.sub{color:var(--muted);margin:0 0 20px;font-size:.92rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.chip{border:1px solid var(--line);background:var(--chip);color:var(--ink);border-radius:999px;padding:9px 16px;font:inherit;cursor:pointer;min-height:44px}
+.chip[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+label{display:block;font-size:.85rem;color:var(--muted);margin:12px 0 4px}
+input,select{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 12px;min-height:44px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.next{border-radius:12px;padding:14px;background:var(--chip);margin:4px 0 4px}
+.next .who{font-size:1.5rem;font-weight:700}
+.next .small{color:var(--muted);font-size:.85rem;margin-top:4px}
+.btn{width:100%;border:0;border-radius:12px;background:var(--accent);color:var(--accent-ink);font:inherit;font-weight:700;padding:14px;margin-top:16px;cursor:pointer;min-height:48px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+details{margin-top:12px}
+summary{cursor:pointer;color:var(--muted);font-size:.9rem}
+table{width:100%;border-collapse:collapse;font-size:.95rem}
+th,td{text-align:right;padding:8px 4px;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+th{font-size:.78rem;color:var(--muted);font-weight:600}
+tr:last-child td{border-bottom:0}
+.note{color:var(--muted);font-size:.82rem;margin:10px 0 0}
+.hist{padding:12px 0;border-bottom:1px solid var(--line)}
+.hist:last-child{border-bottom:0}
+.hist .top{display:flex;justify-content:space-between;gap:8px}
+.hist .meta{color:var(--muted);font-size:.85rem;margin-top:2px}
+.tag{display:inline-block;font-size:.72rem;border-radius:6px;padding:1px 6px;background:var(--chip);color:var(--muted);margin-right:4px}
+.tag.warn{color:var(--warn)}
+.del{background:none;border:0;color:var(--muted);font:inherit;font-size:.82rem;cursor:pointer;text-decoration:underline;padding:4px 0;min-height:32px}
+.toast{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));max-width:528px;margin:0 auto;background:var(--ink);color:var(--bg);border-radius:12px;padding:14px 16px;box-shadow:0 6px 24px rgba(0,0,0,.25);z-index:10}
+.err{color:#b91c1c;font-size:.9rem;margin-top:8px}
+@media (prefers-color-scheme:dark){.err{color:#f87171}}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<main>
+
+<section id="login" class="hidden">
+  <h1>Cine plătește?</h1>
+  <p class="sub">Introdu PIN-ul grupului.</p>
+  <div class="card">
+    <label for="pin">PIN</label>
+    <input id="pin" type="password" autocomplete="current-password" inputmode="text">
+    <button class="btn" id="loginBtn">Intră</button>
+    <div class="err" id="loginErr"></div>
+  </div>
+</section>
+
+<section id="app" class="hidden">
+  <h1>Cine plătește?</h1>
+  <p class="sub">Cine a ieșit, unde și al cui e rândul.</p>
+
+  <div class="card">
+    <h2>Ieșire nouă</h2>
+    <label>Cine e prezent?</label>
+    <div class="chips" id="chips"></div>
+
+    <div class="next" id="next"></div>
+
+    <div class="row">
+      <div>
+        <label for="day">Data</label>
+        <input id="day" type="date">
+      </div>
+      <div>
+        <label for="by">Cine introduce?</label>
+        <select id="by"></select>
+      </div>
+    </div>
+    <label for="rest">Restaurant</label>
+    <input id="rest" list="restList" maxlength="80" placeholder="ex. La Mama">
+    <datalist id="restList"></datalist>
+
+    <details>
+      <summary>A plătit altcineva decât cel propus?</summary>
+      <label for="payer">Cine a plătit de fapt</label>
+      <select id="payer"></select>
+    </details>
+
+    <button class="btn" id="save">Salvează ieșirea</button>
+    <div class="err" id="saveErr"></div>
+  </div>
+
+  <div class="card">
+    <h2>Clasament</h2>
+    <table id="board"></table>
+    <p class="note">Sold: la o masă plătești +(câți au mâncat − 1), iar ceilalți primesc −1. Cine lipsește rămâne neschimbat. Sold mai mic = vine mai repede la plată.</p>
+  </div>
+
+  <div class="card">
+    <h2>Istoric</h2>
+    <div id="hist"></div>
+  </div>
+</section>
+
+</main>
+<div class="toast hidden" id="toast" role="status"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtBal = n => n > 0 ? '+' + n : n < 0 ? '−' + Math.abs(n) : '0';
+const fmtDate = iso => new Date(iso + 'T12:00:00').toLocaleDateString('ro-RO', {day:'numeric', month:'short', year:'numeric'});
+
+let S = {members: [], stats: [], outings: []};
+let present = new Set();
+let toastTimer;
+
+async function api(path, opts = {}) {
+  const r = await fetch(path, {credentials: 'same-origin', headers: {'Content-Type': 'application/json'}, ...opts});
+  if (r.status === 401 && path !== '/api/login') { showLogin(); throw new Error('auth'); }
+  const data = r.status === 204 ? null : await r.json().catch(() => null);
+  if (!r.ok) {
+    const d = data && data.detail;
+    throw new Error(typeof d === 'string' ? d : 'Ceva nu a mers. Verifică datele și încearcă din nou.');
+  }
+  return data;
+}
+
+function toast(msg) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.remove('hidden');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.add('hidden'), 7000);
+}
+
+function showLogin() {
+  $('#app').classList.add('hidden');
+  $('#login').classList.remove('hidden');
+  $('#pin').focus();
+}
+
+async function login() {
+  $('#loginErr').textContent = '';
+  try {
+    await api('/api/login', {method: 'POST', body: JSON.stringify({pin: $('#pin').value})});
+    $('#pin').value = '';
+    await start();
+  } catch (e) { $('#loginErr').textContent = e.message; }
+}
+
+async function load() {
+  S = await api('/api/state');
+}
+
+function renderChips() {
+  $('#chips').innerHTML = S.members.map(m =>
+    `<button type="button" class="chip" data-n="${esc(m)}" aria-pressed="${present.has(m)}">${esc(m)}</button>`).join('');
+}
+
+function renderBy() {
+  const saved = localStorage.getItem('rota_by') || '';
+  $('#by').innerHTML = '<option value="">—</option>' +
+    S.members.map(m => `<option ${m === saved ? 'selected' : ''}>${esc(m)}</option>`).join('');
+}
+
+function renderPayerSelect() {
+  const cur = $('#payer').value;
+  const list = S.members.filter(m => present.has(m));
+  $('#payer').innerHTML = '<option value="">Automat (cum e propus mai sus)</option>' +
+    list.map(m => `<option ${m === cur ? 'selected' : ''}>${esc(m)}</option>`).join('');
+}
+
+async function renderNext() {
+  const box = $('#next');
+  $('#save').disabled = present.size < 2;
+  if (present.size < 2) {
+    box.innerHTML = '<div class="small">Bifează cel puțin 2 persoane.</div>';
+    return;
+  }
+  try {
+    const r = await api('/api/next', {method: 'POST', body: JSON.stringify({present: [...present]})});
+    const order = r.ranking.map(x => `${esc(x.name)} (${fmtBal(x.balance)})`).join(' → ');
+    if (r.tie) {
+      box.innerHTML = `<div class="small">Egalitate între</div><div class="who">${r.candidates.map(esc).join(', ')}</div>
+        <div class="small">Se trage la sorți când salvezi, iar rezultatul apare în istoric.</div>
+        <div class="small">Ordinea: ${order}</div>`;
+    } else {
+      box.innerHTML = `<div class="small">Urmează să plătească</div><div class="who">${esc(r.candidates[0])}</div>
+        <div class="small">Ordinea: ${order}</div>`;
+    }
+  } catch (e) { if (e.message !== 'auth') box.textContent = e.message; }
+}
+
+function renderBoard() {
+  const rows = [...S.stats].sort((a, b) => a.balance - b.balance || a.name.localeCompare(b.name));
+  $('#board').innerHTML =
+    '<tr><th>Nume</th><th>Plătite</th><th>Prezențe</th><th>Sold</th></tr>' +
+    rows.map(s => `<tr><td>${esc(s.name)}</td><td>${s.paid}</td><td>${s.attended}</td><td><b>${fmtBal(s.balance)}</b></td></tr>`).join('');
+}
+
+function renderHist() {
+  if (!S.outings.length) { $('#hist').innerHTML = '<p class="note">Nicio ieșire încă.</p>'; }
+  else {
+    $('#hist').innerHTML = S.outings.map(o => {
+      const tags = [];
+      if (o.draw) tags.push(`<span class="tag">Tras la sorți: ${o.draw.candidates.map(esc).join(', ')}</span>`);
+      if (o.manual) tags.push('<span class="tag warn">Ales manual</span>');
+      const absent = S.members.filter(m => !o.attendees.includes(m));
+      return `<div class="hist">
+        <div class="top"><div><b>${esc(o.restaurant)}</b> · ${fmtDate(o.date)}</div><button class="del" data-id="${o.id}">Șterge</button></div>
+        <div class="meta">A plătit <b>${esc(o.payer)}</b> · ${o.attendees.length} persoane${absent.length ? ' · lipsă: ' + absent.map(esc).join(', ') : ''}</div>
+        <div class="meta">${tags.join('')}${o.entered_by ? 'introdus de ' + esc(o.entered_by) : ''}</div>
+      </div>`;
+    }).join('');
+  }
+  const names = [...new Set(S.outings.map(o => o.restaurant))].sort((a, b) => a.localeCompare(b));
+  $('#restList').innerHTML = names.map(n => `<option value="${esc(n)}">`).join('');
+}
+
+async function start() {
+  await load();
+  if (!present.size) S.members.forEach(m => present.add(m));
+  $('#login').classList.add('hidden');
+  $('#app').classList.remove('hidden');
+  if (!$('#day').value) $('#day').value = new Date().toLocaleDateString('sv-SE');
+  renderChips(); renderBy(); renderPayerSelect(); renderBoard(); renderHist();
+  await renderNext();
+}
+
+async function save() {
+  $('#saveErr').textContent = '';
+  $('#save').disabled = true;
+  try {
+    const by = $('#by').value || null;
+    if (by) localStorage.setItem('rota_by', by);
+    const o = await api('/api/outings', {method: 'POST', body: JSON.stringify({
+      day: $('#day').value, restaurant: $('#rest').value, present: [...present],
+      payer: $('#payer').value || null, entered_by: by})});
+    let msg = `Salvat. A plătit ${o.payer}.`;
+    if (o.draw) msg += ` (tras la sorți dintre ${o.draw.candidates.join(', ')})`;
+    toast(msg);
+    $('#rest').value = '';
+    $('#payer').value = '';
+    await load();
+    renderBoard(); renderHist(); renderPayerSelect();
+    await renderNext();
+  } catch (e) { if (e.message !== 'auth') $('#saveErr').textContent = e.message; }
+  $('#save').disabled = present.size < 2;
+}
+
+$('#chips').addEventListener('click', e => {
+  const b = e.target.closest('.chip');
+  if (!b) return;
+  const n = b.dataset.n;
+  present.has(n) ? present.delete(n) : present.add(n);
+  b.setAttribute('aria-pressed', present.has(n));
+  renderPayerSelect();
+  renderNext();
+});
+
+$('#hist').addEventListener('click', async e => {
+  const b = e.target.closest('.del');
+  if (!b) return;
+  if (!confirm('Ștergi această ieșire? Soldurile se recalculează.')) return;
+  try {
+    await api('/api/outings/' + b.dataset.id, {method: 'DELETE'});
+    await load();
+    renderBoard(); renderHist();
+    await renderNext();
+  } catch (err) { if (err.message !== 'auth') toast(err.message); }
+});
+
+$('#save').addEventListener('click', save);
+$('#loginBtn').addEventListener('click', login);
+$('#pin').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+
+start().catch(e => { if (e.message !== 'auth') toast(e.message); });
+</script>
+</body>
+</html>

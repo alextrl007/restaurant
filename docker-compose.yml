@@ -1,0 +1,34 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    environment:
+      GROUP_PIN: ${GROUP_PIN:?Setează GROUP_PIN în fișierul .env}
+      MEMBERS: ${MEMBERS:-Razvan,Andrei,Vlad,Alex,Dragos,Zsolt}
+      TZ: Europe/Bucharest
+    volumes:
+      - rota_data:/data
+    ports:
+      - "${BIND:-0.0.0.0}:${PORT:-8080}:8000"
+
+  # HTTPS automat (Let's Encrypt). Pornește doar cu: docker compose --profile https up -d
+  caddy:
+    image: caddy:2-alpine
+    profiles: ["https"]
+    restart: unless-stopped
+    depends_on:
+      - app
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  rota_data:
+  caddy_data:
+  caddy_config:
